@@ -2,7 +2,10 @@
   <div class="search-bar">
     <input
       type="text"
-      :value="modelValue"  @input="updateSearchTerm" placeholder="Search characters"
+      :value="modelValue"
+      @input="handleInput"
+    @keydown.enter="handleEnter"
+    placeholder="Search characters"
     />
     <button @click="emitSearch">Search</button>
   </div>
@@ -17,6 +20,13 @@ export default {
   methods: {
     updateSearchTerm(event) {
       this.$emit('update:modelValue', event.target.value);
+    },
+    handleEnter() {
+      this.emitSearch();
+    },
+    handleInput(event) {
+      this.updateSearchTerm(event);
+      this.$emit('search', event.target.value);
     },
     emitSearch() {
       this.$emit('search', this.modelValue);
