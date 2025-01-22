@@ -49,6 +49,5 @@ docker run -p 8080:80 rick-and-morty-app
 
 Теперь приложение доступно по адресу http://localhost:8080.
 
-поправить файлики
 
 
