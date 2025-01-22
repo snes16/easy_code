@@ -67,20 +67,23 @@ const actions = {
     }
   },
 
-  async fetchCharactersByPage({ commit }, page) {
-    commit('SET_LOADING', true)
-    axios.get(`https://rickandmortyapi.com/api/character/?page=${page}`)
-      .then(response => {
-        commit('SET_CHARACTERS_BY_PAGE', response.data.results)
-        commit('SET_TOTAL_PAGES', response.data.info.pages)
-        commit('SET_PAGE', page)
-      })
-      .catch(error => {
-        console.error('Ошибка при загрузке персонажей:', error)
-      })
-      .finally(() => {
-        commit('SET_LOADING', false)
-      })
+  async fetchCharactersByPage({ commit }, { page = 1, searchTerm = '' }) {
+    commit('SET_LOADING', true);
+
+    let url = `https://rickandmortyapi.com/api/character/?page=${page}`;
+    if (searchTerm)
+      url += `&name=${searchTerm}`;
+    try {
+      const response = await axios.get(url);
+      commit('SET_CHARACTERS_BY_PAGE', response.data.results);
+      commit('SET_TOTAL_PAGES', response.data.info.pages);
+      commit('SET_PAGE', page);
+    } catch (error) {
+      console.error('Ошибка при загрузке персонажей:', error);
+      commit('SET_ERROR', 'Ошибка при загрузке данных. Пожалуйста, попробуйте позже.');
+    } finally {
+      commit('SET_LOADING', false);
+    }
   },
 
   async fetchCharacterById({ commit }, id) {

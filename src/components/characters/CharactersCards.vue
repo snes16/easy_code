@@ -1,5 +1,6 @@
 <template>
   <UpButton />
+  <SearchBar v-model="searchTerm" @search="handleSearch" />
     <div class="characters" v-if="charactersByPage.length">
       <CharacterCard
         v-for="character in charactersByPage"
@@ -17,23 +18,28 @@
 </template>
 
 <script>
-import CharacterCard from './CharacterCard.vue'
-import LoaderSpinner from '@/components/common/LoaderSpinner.vue'
-import UpButton from '@/components/common/UpButton.vue'
-import Pagination from '@/components/common/Pagination.vue'
+import SearchBar from '@/components/common/SearchBar.vue';
+import LoaderSpinner from '@/components/common/LoaderSpinner.vue';
+import UpButton from '@/components/common/UpButton.vue';
+import Pagination from '@/components/common/Pagination.vue';
+import { debounce } from '@/tools/tools';
+import CharacterCard from '@/components/characters/CharacterCard.vue'
 
 export default {
   components: {
     CharacterCard,
+    SearchBar,
     LoaderSpinner,
     UpButton,
-    Pagination
+    Pagination,
   },
   data() {
     return {
+      searchTerm: '',
       isLoading: false,
-      currentPage: 1
-    }
+      currentPage: 1,
+      debouncedSearch: null,
+    };
   },
   computed: {
     totalPages() {
@@ -41,23 +47,41 @@ export default {
     },
     charactersByPage() {
       return this.$store.state.charactersModule.charactersByPage;
-    }
+    },
   },
   methods: {
-    fetchCharacters(page = this.currentPage) {
-      this.isLoading = true
-      this.$store.dispatch('charactersModule/fetchCharactersByPage', page) // Use the new action
-        .finally(() => {
-          this.isLoading = false
+    fetchCharactersByPage(page, searchTerm = '') {
+      this.isLoading = true;
+      this.$store.dispatch('charactersModule/fetchCharactersByPage', { page, searchTerm})
+        .catch((error) => {
+          console.error("Error fetching characters:", error);
         })
+        .finally(() => {
+          this.isLoading = false;
+        });
+    },
+    handleSearch(searchTerm) {
+      this.currentPage = 1;
+      this.debouncedSearch(searchTerm);
+    },
+    performSearch(searchTerm){
+      this.fetchCharactersByPage(this.currentPage, searchTerm)
     },
     handlePageChange(newPage) {
       this.currentPage = newPage;
-      this.fetchCharacters(newPage);
-    }
+      this.fetchCharactersByPage(newPage, this.searchTerm);
+    },
   },
   mounted() {
-    this.fetchCharacters()
+    this.fetchCharactersByPage(this.currentPage);
+    this.debouncedSearch = debounce(this.performSearch, 500);
+  },
+  watch: {
+    searchTerm(newVal) {
+      if (!newVal) {
+        this.handleSearch('');
+      }
+    }
   }
 };
 </script>
